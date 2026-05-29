@@ -1,30 +1,24 @@
-import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  
-  // Get search and location terms from the user's browser request
-  const search = searchParams.get("search") || "";
-  const location = searchParams.get("location") || "";
-  
+export async function GET() {
   try {
+    // Fetch all colleges from the live Neon database
     const colleges = await prisma.college.findMany({
-      where: {
-        AND: [
-          { name: { contains: search, mode: "insensitive" } },
-          location ? { location: { contains: location, mode: "insensitive" } } : {},
-        ],
-      },
       orderBy: {
-        rating: "desc", // Sort by highest rating first
+        createdAt: 'desc',
       },
     });
 
-    return NextResponse.json(colleges);
+    // Send the data back to the frontend with a clear success code
+    return NextResponse.json(colleges, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch colleges" }, { status: 500 });
+    console.error("Database fetch error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch colleges from database" },
+      { status: 500 }
+    );
   }
 }
